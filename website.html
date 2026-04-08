@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jejak Rasa - Eksplorasi Kuliner Nusantara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .food-card:hover { transform: translateY(-5px); transition: 0.3s; }
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <nav class="bg-white shadow-md sticky top-0 z-40">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-orange-600">JEJAK RASA</h1>
+            <div class="space-x-6 flex items-center">
+                <button onclick="location.reload()" class="hover:text-orange-600 font-medium">Beranda</button>
+                <div class="relative">
+                    <i class="fa-solid fa-heart text-xl text-gray-700"></i>
+                    <span id="wish-count" class="absolute -top-2 -right-2 bg-orange-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </div>
+                <button onclick="openLogin()" id="auth-btn" class="bg-orange-600 text-white px-5 py-2 rounded-full hover:bg-orange-700 transition">Login Admin</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-10">
+        <div id="food-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            </div>
+    </main>
+
+    <div id="detail-modal" class="modal flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative p-6 md:p-10">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-3xl text-gray-500">&times;</button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <div id="login-modal" class="modal flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-96">
+            <h3 class="text-2xl font-bold mb-6 text-center">Registrasi Admin</h3>
+            <input type="text" id="usn" placeholder="Username (Huruf Saja)" class="w-full p-3 border rounded-lg mb-4 focus:outline-orange-500">
+            <input type="password" id="pw" placeholder="Password (Huruf & Angka)" class="w-full p-3 border rounded-lg mb-6 focus:outline-orange-500">
+            <button onclick="handleLogin()" class="w-full bg-orange-600 text-white py-3 rounded-lg font-bold">Sign In</button>
+            <button onclick="closeLogin()" class="w-full mt-3 text-gray-400 text-sm">Kembali</button>
+        </div>
+    </div>
+
+    <script>
+        const foods = [
+            { id: 1, nama: "Soto Betawi H. Mamat", harga: "Rp 35.000", rasa: "Gurih santan kental dengan rempah pilihan.", lokasi: "Jakarta", img: "WhatsApp Image 2026-04-08 at 21.19.16.jpeg", desc: "Kritik Internet: Soto paling legendaris dengan daging empuk." },
+            { id: 2, nama: "Bakmi Karet Koko", harga: "Rp 30.000", rasa: "Mie kenyal dengan minyak bawang harum.", lokasi: "Jakarta Utara", img: "WhatsApp Image 2026-04-08 at 21.27.20.jpeg", desc: "Review: Tekstur mienya juara di kelasnya." },
+            { id: 3, nama: "Sate Maranggi", harga: "Rp 45.000", rasa: "Manis gurih meresap tanpa lemak.", lokasi: "Purwakarta", img: "WhatsApp Image 2026-04-08 at 21.28.03.jpeg", desc: "Review: Potongan dagingnya besar dan bumbu meresap." },
+            { id: 4, nama: "Nasgor Kambing Kebon Sirih", harga: "Rp 40.000", rasa: "Rempah kari tajam dan melimpah.", lokasi: "Menteng", img: "WhatsApp Image 2026-04-08 at 21.29.08.jpeg", desc: "Kritik: Porsinya besar, cukup untuk berbagi." },
+            { id: 5, nama: "Gudeg Pawon", harga: "Rp 25.000", rasa: "Manis legit dengan krecek pedas.", lokasi: "Yogyakarta", img: "WhatsApp Image 2026-04-08 at 21.29.59.jpeg", desc: "Review: Pengalaman makan langsung di dapur (pawon)." },
+            { id: 6, nama: "Tahu Gejrot", harga: "Rp 15.000", rasa: "Pedas asam segar kuah gula merah.", lokasi: "Cirebon", img: "WhatsApp Image 2026-04-08 at 21.30.50.jpeg", desc: "Review: Segar dinikmati saat siang hari." },
+            { id: 7, nama: "Pempek Vico", harga: "Rp 35.000", rasa: "Ikan tenggiri asli dengan cuko pedas.", lokasi: "Palembang", img: "WhatsApp Image 2026-04-08 at 21.31.41.jpeg", desc: "Review: Cukonya kental dan sangat mantap." },
+            { id: 8, nama: "Mie Aceh Titi Bobrok", harga: "Rp 30.000", rasa: "Rempah Aceh kuat dengan kepiting/daging.", lokasi: "Medan", img: "WhatsApp Image 2026-04-08 at 21.32.34.jpeg", desc: "Kritik: Rempahnya berani dan sangat otentik." },
+            { id: 9, nama: "Nasi Kapau Uni Upik", harga: "Rp 50.000", rasa: "Gulai kental khas Minang asli.", lokasi: "Bukittinggi", img: "WhatsApp Image 2026-04-08 at 21.33.28.jpeg", desc: "Review: Lauknya sangat beragam dan gurih." },
+            { id: 10, nama: "Rendang Pagi Sore", harga: "Rp 25.000", rasa: "Daging lembut bumbu hitam pekat.", lokasi: "Jakarta", img: "WhatsApp Image 2026-04-08 at 21.33.59.jpeg", desc: "Review: Rendang paling premium yang pernah ada." },
+            { id: 11, nama: "Batagor Kingsley", harga: "Rp 40.000", rasa: "Ikan tenggiri renyah bumbu kacang.", lokasi: "Bandung", img: "WhatsApp Image 2026-04-08 at 21.35.24.jpeg", desc: "Review: Batagor paling dicari wisatawan di Bandung." },
+            { id: 12, nama: "Bebek Sinjay", harga: "Rp 35.000", rasa: "Bebek krispi dengan sambal mangga.", lokasi: "Madura", img: "WhatsApp Image 2026-04-08 at 21.35.52.jpeg", desc: "Kritik: Sambal pencitnya memberikan sensasi unik." },
+            { id: 13, nama: "Lontong Sayur Medan", harga: "Rp 20.000", rasa: "Tauco pedas dan teri kacang gurih.", lokasi: "Medan", img: "WhatsApp Image 2026-04-08 at 21.36.29.jpeg", desc: "Review: Tekstur kerupuk dan kuahnya menyatu sempurna." },
+            { id: 14, nama: "Sate Madura H. Kadir", harga: "Rp 30.000", rasa: "Bumbu kacang halus dan daging empuk.", lokasi: "Jakarta", img: "WhatsApp Image 2026-04-08 at 21.37.03.jpeg", desc: "Review: Aroma smokey-nya membangkitkan selera." },
+            { id: 15, nama: "Ayam Betutu", harga: "Rp 90.000", rasa: "Rempah tajam meresap ke tulang.", lokasi: "Gilimanuk", img: "WhatsApp Image 2026-04-08 at 21.37.55.jpeg", desc: "Review: Pedasnya nagih dan bumbunya kaya." },
+            { id: 16, nama: "Klappertaart", harga: "Rp 25.000", rasa: "Manis lembut dingin kelapa muda.", lokasi: "Manado", img: "WhatsApp Image 2026-04-08 at 21.38.24.jpeg", desc: "Review: Dessert terbaik untuk penutup makan." },
+            { id: 17, nama: "Bakso Solo Samrat", harga: "Rp 40.000", rasa: "Bakso urat kuah kaldu sapi kental.", lokasi: "Jakarta", img: "WhatsApp Image 2026-04-08 at 21.39.42.jpeg", desc: "Review: Kuahnya sangat berkaldu dan kental." },
+            { id: 18, nama: "Konro Bakar", harga: "Rp 75.000", rasa: "Iga sapi bumbu kacang Makassar.", lokasi: "Makassar", img: "WhatsApp Image 2026-04-08 at 21.40.50.jpeg", desc: "Review: Iga bakarnya sangat empuk." },
+            { id: 19, nama: "Pisang Goreng Madu", harga: "Rp 7.000", rasa: "Manis madu karamel alami.", lokasi: "Jakarta", img: "WhatsApp Image 2026-04-08 at 21.41.34.jpeg", desc: "Kritik: Camilan sore paling favorit se-Jakarta." },
+            { id: 20, nama: "Gulai Kepala Ikan", harga: "Rp 85.000", rasa: "Lemak ikan gurih kuah kuning segar.", lokasi: "Semarang", img: "WhatsApp Image 2026-04-08 at 21.42.20.jpeg", desc: "Review: Ikannya segar dan bumbunya pas." },
+            { id: 21, nama: "Seblak Teh Betty", harga: "Rp 20.000", rasa: "Kencur pedas dengan isian lengkap.", lokasi: "Bandung", img: "WhatsApp Image 2026-04-08 at 21.43.02.jpeg", desc: "Review: Seblak prasmanan paling viral." },
+            { id: 22, nama: "Nasi Campur Bali", harga: "Rp 45.000", rasa: "Rempah bali kompleks dan sate lilit.", lokasi: "Ubud", img: "WhatsApp Image 2026-04-08 at 21.55.00.jpeg", desc: "Review: Satu piring penuh dengan kebahagiaan rempah." }
+        ];
+
+        let wishlistCount = 0;
+
+        function render() {
+            document.getElementById('food-grid').innerHTML = foods.map(f => `
+                <div class="food-card bg-white rounded-xl shadow-md overflow-hidden cursor-pointer" onclick="openDetail(${f.id})">
+                    <img src="${f.img}" class="w-full h-48 object-cover">
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg">${f.nama}</h3>
+                        <p class="text-orange-600 font-bold">${f.harga}</p>
+                        <p class="text-gray-400 text-xs mt-2 uppercase tracking-widest">${f.lokasi}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openDetail(id) {
+            const f = foods.find(x => x.id === id);
+            document.getElementById('modal-content').innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <img src="${f.img}" class="w-full rounded-xl shadow-lg">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-2">${f.nama}</h2>
+                        <p class="text-orange-600 text-xl font-bold mb-4">${f.harga}</p>
+                        <div class="space-y-4 text-gray-700">
+                            <p><strong>Cita Rasa:</strong> ${f.rasa}</p>
+                            <p><strong>Lokasi Penjualan:</strong> 📍 ${f.lokasi}</p>
+                            <div class="bg-orange-50 p-4 rounded-lg italic text-sm text-orange-900 border-l-4 border-orange-500">
+                                "${f.desc}"
+                            </div>
+                        </div>
+                        <button onclick="addWish()" class="w-full mt-6 bg-orange-600 text-white py-3 rounded-lg font-bold hover:bg-orange-700 transition">
+                            ❤ Tambah ke Wishlist
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-10 pt-6 border-t">
+                    <h4 class="font-bold mb-4 text-lg">Review Pembeli</h4>
+                    <div id="rev-list" class="space-y-3 mb-4">
+                        <p class="text-gray-400 text-sm italic">Belum ada review. Kamu belum mencoba makanan ini? Yuk beli!</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="rev-in" type="text" placeholder="Tulis review-mu..." class="flex-1 border p-3 rounded-lg focus:outline-orange-500">
+                        <button onclick="postReview()" class="bg-gray-800 text-white px-6 rounded-lg font-bold">Kirim</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detail-modal').style.display = 'flex';
+        }
+
+        function postReview() {
+            const val = document.getElementById('rev-in').value;
+            if(!val) return;
+            const list = document.getElementById('rev-list');
+            if(list.innerText.includes("Belum ada")) list.innerHTML = "";
+            list.innerHTML += `<div class="bg-gray-50 p-3 rounded-lg text-sm border"><strong>User:</strong> ${val}</div>`;
+            document.getElementById('rev-in').value = "";
+        }
+
+        function addWish() {
+            wishlistCount++;
+            document.getElementById('wish-count').innerText = wishlistCount;
+            alert("Berhasil ditambahkan ke Wishlist! Ingat, kamu belum mencoba makanan ini ya.");
+        }
+
+        function handleLogin() {
+            const u = document.getElementById('usn').value;
+            const p = document.getElementById('pw').value;
+            if(/^[A-Za-z]+$/.test(u) && /^(?=.*[A-Za-z])(?=.*\d).+$/.test(p)) {
+                alert("Sign In Berhasil!");
+                document.getElementById('auth-btn').innerText = "Admin: " + u;
+                closeLogin();
+            } else {
+                alert("Gagal! Username harus huruf. Password harus huruf & angka.");
+            }
+        }
+
+        function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
+        function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
+        function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
+
+        render();
+    </script>
+</body>
+</html>
